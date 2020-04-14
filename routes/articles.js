@@ -5,6 +5,8 @@ const Op = models.Sequelize.Op;
 
 /* GET home page. */
 router.get('/', async function (req, res, next) {
+  /* 模糊查询 */
+
   const where = {};
   const { title } = req.query;
   if (title) {
@@ -12,11 +14,17 @@ router.get('/', async function (req, res, next) {
       [Op.like]: `%${title}%`,
     };
   }
-  const data = await models.Article.findAll({
+  /* 分页查询 */
+  const currentPage = parseInt(req.query.currentPage) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 1;
+
+  const result = await models.Article.findAndCountAll({
     order: [['id', 'DESC']],
     where,
+    offset: (currentPage - 1) * pageSize,
+    limit: pageSize,
   });
-  res.json({ data });
+  res.json({ data: result.rows, total: result.count, currentPage, pageSize });
 });
 
 router.post('/', async function (req, res, next) {
